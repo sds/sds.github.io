@@ -1,4 +1,3 @@
-My personal web site, powered by [Jekyll][Jekyll] and running on [Heroku][Heroku].
+Personal web site, powered by [Jekyll][Jekyll].
 
-[Heroku]: http://heroku.com
 [Jekyll]: https://jekyllrb.com/
