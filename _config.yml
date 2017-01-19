@@ -3,7 +3,7 @@ gems:
   - jemoji
   - jekyll-paginate
 
-title: 'Shane da Silva'
+title: 'Shane da&nbsp;Silva'
 description: 'Coding by the woods'
 
 email: 'shane@dasilva.io'
