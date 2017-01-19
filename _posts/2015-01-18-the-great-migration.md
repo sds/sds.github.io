@@ -79,16 +79,19 @@ reasons:
   were already running in Rackspace as part of Brigade’s infrastructure
   (services like [Graphite][GRA], [Sentry][SEN], etc.). We could piggy-back on
   these existing systems to save time.
+
 * **Ditch the old Chef codebase**: Brigade and Causes infrastructure had
   separate [Chef][CHE] servers and thus a largely different set of cookbook
   code. A lot of the Causes cookbook code had been written before many Chef
   best practices had been popularized, which we had addressed when writing the
   Brigade cookbooks. Furthermore, switching to using the Brigade cookbooks
   would save us having to maintain two codebases.
+
 * **Switch to community cookbooks**: For the cookbooks we hadn’t rewritten (since
   they were not services we used in Brigade), we could switch from using our
   custom-written Causes cookbooks to community cookbooks, giving us the benefit
   of using code actively maintained by others.
+
 * **Upgrade all the things**: There were a number of software components we could
   potentially upgrade that would normally be difficult or time-consuming (and
   that had not been upgraded for that very reason). This included upgrading our
@@ -99,15 +102,18 @@ reasons:
   Causes separately in Rackspace, we essentially had a giant integration test
   where we could test that all of these upgrades worked before we did the
   switchover.
+
 * **Minimize downtime**: We could build a copy of Causes in Rackspace while
   simultaneously leaving the existing Causes running in our data center,
   minimizing the amount of downtime we would need to take when switching over.
+
 * **Reduce machine footprint**: We could consolidate a large number of our
   servers into fewer machines in Rackspace, as the specifications on their
   servers were better than what we were running in our datacenter. Furthermore,
   we could combine our multiple database partitions into one. This would
   drastically reduce our footprint from ~150 machines to under 30!
-* **Save $$$**: Thanks to the reduced machine footprint, we could do all of
+
+* **Save $**: Thanks to the reduced machine footprint, we could do all of
   this for less than it was currently costing to run Causes (on the order of
   40% cheaper).
 
@@ -124,12 +130,10 @@ We didn’t take much time to make detailed plans, since we knew that ultimately
 We completed the following set of tasks in this approximate order, parallelizing where possible (which was often the case):
 
 1. **Set up a VPN tunnel from our datacenter to Rackspace.**
-
    This would allow us to replicate data from the old datacenter as we were
    building the infrastructure in Rackspace.
 
 2. **Built MySQL slaves to replicate data from datacenter into Rackspace.**
-
    We had multiple database partitions, but focused on setting up replication
    on our _main_ partition---the name we used for the primary partition with most
    of the tables for the application; we had two additional partitions
@@ -147,7 +151,6 @@ We completed the following set of tasks in this approximate order, parallelizing
    running.
 
 3. **Combined other partitions into the main partition on the live site.**
-
    This was done by syncing the tables from the other [partitions][PAR] to the
    main partition with Percona’s [`pt-table-sync`][PTS]. We were willing to
    temporarily forego the performance benefits of separate partitions for the
@@ -174,52 +177,46 @@ We completed the following set of tasks in this approximate order, parallelizing
    of the data set, but was usually under 10 minutes.
 
 4. **Upgraded the Beanstalk queues to the latest version.**
-
    This required us to [fix some issues][BSI] in the [`AsyncObserver`
    client][ASO] that the workers used to fetch jobs, but otherwise was pretty
    straightforward.
 
 5. **Replaced our use of [`memcached`][MEM] with Redis.**
-
-    This was relatively easy thanks to the abstraction provided by
-    [`Rails.cache`][RLC], but switching from [DalliStore][DLS] to
-    [RedisStore][RDS] changed the signature of `Rails.cache.increment` which
-    required some adjustments to fix. This wasn’t in our original high-level
-    plan, but we saw an opportunity to further reduce the number of
-    technologies we would need to support going forward.
+   This was relatively easy thanks to the abstraction provided by
+   [`Rails.cache`][RLC], but switching from [DalliStore][DLS] to
+   [RedisStore][RDS] changed the signature of `Rails.cache.increment` which
+   required some adjustments to fix. This wasn’t in our original high-level
+   plan, but we saw an opportunity to further reduce the number of
+   technologies we would need to support going forward.
 
 6. **Stood up a new Solr cluster from scratch.**
+   Our old cookbook for provision [Solr][SLR] was written in-house and quite
+   old, so we took the opportunity to switch to a [wrapper cookbook][WCB]
+   using the [community Solr cookbook][CSC] while we were rebuilding the
+   cluster.
 
-    Our old cookbook for provision [Solr][SLR] was written in-house and quite
-    old, so we took the opportunity to switch to a [wrapper cookbook][WCB]
-    using the [community Solr cookbook][CSC] while we were rebuilding the
-    cluster.
-
-    We weren’t able to import the indexes because they were sharded across
-    multiple hosts, so we just reindexed everything with an async job, which
-    took less than a day.
-
+   We weren’t able to import the indexes because they were sharded across
+   multiple hosts, so we just reindexed everything with an async job, which
+   took less than a day.
 7. **Scrapped our custom deploy scripts in favor of Capistrano.**
-
-    This gave us the benefit of unifying the deployment technology we used for
-    all Ruby code in our infrastructure and also allowed us to take advantage
-    of the large number of community plugins Capistrano provides for projects
-    like [rbenv][RBE], [bundler][BLR], [Rails][RAI], [unicorn][UNI], etc.
+   This gave us the benefit of unifying the deployment technology we used for
+   all Ruby code in our infrastructure and also allowed us to take advantage
+   of the large number of community plugins Capistrano provides for projects
+   like [rbenv][RBE], [bundler][BLR], [Rails][RAI], [unicorn][UNI], etc.
 
 8. **Iterated.**
+   Throughout this process we developed on a separate `rackspace` branch in
+   the Causes Rails app. This branch was what was deployed to Rackspace as we
+   stood up the various services and tested them. We used copies of production
+   data to give us better confidence that we had our ducks in a row without
+   having to actually touch the live site.
 
-    Throughout this process we developed on a separate `rackspace` branch in
-    the Causes Rails app. This branch was what was deployed to Rackspace as we
-    stood up the various services and tested them. We used copies of production
-    data to give us better confidence that we had our ducks in a row without
-    having to actually touch the live site.
-
-    We managed to complete these steps far faster than we had originally
-    anticipated. A lot of that was luck, but it was also thanks to the effort
-    we had spent making it easy for us to provision new machines. The
-    combination of [Rackspace's API][RSA] and the cookbooks we had just written
-    for Brigade’s infrastructure made building each of the backend Causes
-    services take hours rather than days.
+   We managed to complete these steps far faster than we had originally
+   anticipated. A lot of that was luck, but it was also thanks to the effort
+   we had spent making it easy for us to provision new machines. The
+   combination of [Rackspace's API][RSA] and the cookbooks we had just written
+   for Brigade’s infrastructure made building each of the backend Causes
+   services take hours rather than days.
 
 # The Switchover
 
@@ -235,20 +232,17 @@ tricky part of the switchover was changing which host was the MySQL master.
 We carried out the following steps:
 
 1. **Stopped all Causes web and async workers.**
-
    This would stop any further writes from hitting the master.
 
 2. **Waited for all writes to the current MySQL master to stop.**
-
    Verified there were no connections to the current master by running:
 
-   ```sql
+   ```
    SHOW FULL PROCESSLIST;
    ```
 
 3. **Set current master to read-only.**
-
-   ```sql
+   ```
    SET GLOBAL read_only = 1;
    FLUSH TABLES WITH READ LOCK;
    ```
@@ -257,10 +251,9 @@ We carried out the following steps:
    problem. We would have at most one master accepting writes at any time.
 
 4. **Waited for the Rackspace slave to catch up to the master.**
-
    We waited until the log position in the output of:
 
-   ```sql
+   ```
    SHOW MASTER STATUS;
    ```
 
@@ -268,10 +261,9 @@ We carried out the following steps:
    sync.
 
 5. **Made the Rackspace slave writable.**
-
    Executed the following on the slave:
 
-   ```sql
+   ```
    STOP SLAVE;
    RESET SLAVE ALL;
    SET GLOBAL read_only = 0;
@@ -281,19 +273,16 @@ We carried out the following steps:
    writes.
 
 6. **Start all web and async workers in Rackspace.**
-
    We had a commit ready that reconfigured the workers to connect to the newly
    promoted master, so deploying that commit and starting all the workers
    resulted in the new Causes application running entirely in Rackspace.
 
 7. **Update public DNS to point to the new load balancers in Rackspace.**
-
    It would take time for existing DNS caches to expire, so we still needed a
    way to forward traffic heading to our old load balancer to our new one in
    Rackspace.
 
 8. **Set up reverse proxies in the old datacenter.**
-
    These proxies would simply forward requests to the load balancer in
    Rackspace. This results in the site being slower for a while due to the
    datacenter hop, but is only a temporary measure until all existing DNS

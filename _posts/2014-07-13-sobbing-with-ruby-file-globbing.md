@@ -29,26 +29,26 @@ can start to make your life frustrating when trying to use them.
 
 I recently ran into an issue where Ruby's implementation of glob patterns
 wasn't giving me the results I expected when using a double asterisk
-(`**`). From the [`Dir.glob` documentation][DIRGLOB], `**` is supposed to
+(`**`). From the [Dir.glob documentation][DIRGLOB], `**` is supposed to
 match directories recursively, leading one to assume you can use it to
 represent "zero or more directories".
 
 Consider the following directory structure:
 
-<output title="Example directory structure">
+{% highlight bash %}
 cat.js
 dog.rb
 directory/
   mouse.js
   fox.rb
-</output>
+{% endhighlight %}
 
 If you were to run `Dir.glob('**/*.rb')` from an `irb` console in this
 directory, you'd get the following output:
 
-<output title="Output of Dir.glob('**/*.rb')">
+{% highlight bash %}
 => ["directory/fox.rb", "dog.rb"]
-</output>
+{% endhighlight bash %}
 
 In this case, the behaviour of `**` matches our expectation given the
 documentation, in that it finds all files ending in `.rb`, regardless
@@ -68,9 +68,9 @@ all_files = Dir.glob('**/*')
 all_files.select { |f| File.fnmatch?('**/*.rb', f) }
 {% endhighlight %}
 
-<output title="Output of File.fnmatch? against **/*.rb">
+{% highlight bash %}
 => ["directory/fox.rb"]
-</output>
+{% endhighlight %}
 
 While we would expect the output to be identical, `File.fnmatch?` didn't
 include files from the root directory! It seemed to only find files that

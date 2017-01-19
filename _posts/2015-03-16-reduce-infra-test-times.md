@@ -116,7 +116,7 @@ VOLUME /sys/fs/cgroup
 # Setup container to run Systemd as root process, start an SSH
 # daemon, and provision a user for test-kitchen to connect as.
 RUN yum clean all && \
-    yum -y swap — remove fakesystemd — install systemd systemd-libs && \
+    yum -y swap -- remove fakesystemd -- install systemd systemd-libs && \
 
   # Remove unneeded unit files as this container isn't a proper machine
   (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done) && \

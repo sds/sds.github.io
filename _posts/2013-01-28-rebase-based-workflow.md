@@ -100,12 +100,12 @@ this, you would need to manually set `feature-1` to point to the new commit
 Alternatively, you could avoid this problem by rebasing each branch in serial,
 starting from `master`:
 
-<code class="block" lang="bash">
+{% highlight bash %}
 git fetch origin
 git rebase master --onto origin/master
 git rebase feature-1 --onto master
 git rebase feature-2 --onto feature-1
-</code>
+{% endhighlight %}
 
 # Managing Large Dependency Chains
 
