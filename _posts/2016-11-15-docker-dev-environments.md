@@ -226,8 +226,7 @@ configuration, and eases the cognitive load on engineers.
 
 <figure>
   <img src="/images/posts/dock-architecture.png"
-       title="Docker daemon running services in a Dock container via docker-compose"
-       width="80%">
+       title="Docker daemon running services in a Dock container via docker-compose" />
 </figure>
 
 Inside our Dock containers, we use `docker-compose` to spin up the various
