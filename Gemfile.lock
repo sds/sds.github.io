@@ -21,7 +21,7 @@ GEM
     execjs (2.7.0)
     faraday (0.13.1)
       multipart-post (>= 1.2, < 3)
-    ffi (1.9.18)
+    ffi (1.11.1)
     gemoji (2.1.0)
     github-pages (87)
       github-pages-health-check (= 1.1.0)
